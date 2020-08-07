@@ -6,16 +6,20 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
+	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
+	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	util "github.com/maxonrow/maxonrow-go/tests/"
 )
 
+var tCdc *codec.Codec
 type bankInfo struct {
 	from   string
 	to     string
@@ -49,6 +53,7 @@ func processBankSend() {
 	var resHash = res.Hash.Bytes()
 
 	fmt.Printf("test case with Response.Log : %v\n", resHash)
+	fmt.Printf("test case with Response.Log : %v\n", tx)
 
 }
 
