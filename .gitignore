@@ -1,5 +1,7 @@
 
 # build target
+target
+build/
 
 # Temporary / cached
 *.swp
