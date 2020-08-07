@@ -34,10 +34,7 @@ var tKeys map[string]*keyInfo
 func processBankSend() {
 
 	//0. read from keys.json of sender list
-	readFileKeyJson()
-
-	// Test-cases example :
-	var caseDesc := "alice sending 1 cin to Bob"
+	readFileForSenderKeyJson()
 
 	//1.
 	var fees, _ = types.ParseCoins("200000000cin")
@@ -51,8 +48,7 @@ func processBankSend() {
 	var res = util.BroadcastTxAsync(bz)
 	var resHash = res.Hash.Bytes()
 
-	fmt.Printf("test case (%v) with CheckTx.Log : %v\n", caseDesc, res.CheckTx.Log)
-	fmt.Printf("test case (%v) with DeliverTx.Log : %v\n", caseDesc, res.DeliverTx.Log)
+	fmt.Printf("test case with Response.Log : %v\n", resHash)
 
 }
 
