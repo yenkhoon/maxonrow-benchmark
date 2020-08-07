@@ -5,21 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
-	"path"
 
-	
+	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maxonrow/maxonrow-go/app"
-	"github.com/maxonrow/maxonrow-go/utils"
-	cp "github.com/otiai10/copy"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	rpcclient "github.com/tendermint/tendermint/rpc/lib/client"
 
 	util "github.com/maxonrow/maxonrow-go/tests/"
 )
@@ -41,9 +33,8 @@ var tKeys map[string]*keyInfo
 
 func processBankSend() {
 
-	//0. read from keys.json of sender list 
+	//0. read from keys.json of sender list
 	readFileKeyJson()
-
 
 	// Test-cases example :
 	var caseDesc := "alice sending 1 cin to Bob"
@@ -54,23 +45,18 @@ func processBankSend() {
 	var msg = bank.NewMsgSend(tKeys["alice"].addr, tKeys["bob"].addr, amt)
 
 	//2.
-	tx, bz := makeSignedTx("alice", "alice", 0, 0, fees, "MEMO: P2P sending.......", msg)
+	var tx, bz = makeSignedTx("alice", "alice", 0, 0, fees, "MEMO: P2P sending.......", msg)
 
 	//3.
-	res := util.BroadcastTxAsync(bz)
-	tc.hash = res.Hash.Bytes()
+	var res = util.BroadcastTxAsync(bz)
+	var resHash = res.Hash.Bytes()
 
-	// if !tc.checkFailed {
-	// 	seqs["alice"] = seqs["alice"] + 1
-	// 	fmt.Printf("test case (%v) with CheckTx.Log : %v\n", caseDesc, res.CheckTx.Log)
-	// 	fmt.Printf("test case (%v) with DeliverTx.Log : %v\n", caseDesc, res.DeliverTx.Log)
-
-	// }
+	fmt.Printf("test case (%v) with CheckTx.Log : %v\n", caseDesc, res.CheckTx.Log)
+	fmt.Printf("test case (%v) with DeliverTx.Log : %v\n", caseDesc, res.DeliverTx.Log)
 
 }
 
-
-func readFileKeyJson(){
+func readFileForSenderKeyJson() {
 
 	type key struct {
 		Name        string
@@ -99,8 +85,6 @@ func readFileKeyJson(){
 		}
 
 	}
-
-
 }
 
 // for most of transactions, sender is same as signer.
@@ -109,7 +93,7 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 	acc := util.Account(tKeys[sender].addrStr)
 	// require.NotNil(t, acc, "alias:%s", sender)
 
-	seq = acc.GetSequence() 		//goh123-??? [need KIV later] : no need get from stateDB, directly +1 base from current
+	seq = acc.GetSequence() //no need get from stateDB, directly +1 base from current
 
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
@@ -143,5 +127,3 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 	}
 	return sdtTx, bz
 }
-
-
