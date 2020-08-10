@@ -1,45 +1,34 @@
 package lib
 
 import (
-	"math/rand"
-	"time"
+	"fmt"
+
+	cliKeys "github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/crypto/keys"
 )
 
-const letterBytes = "abcdef0123456789"
-const (
-	letterIdxBits = 4                    // 4 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-)
+//create the key_address
 
-var src = rand.NewSource(time.Now().UnixNano())
-
-// RandStringBytesMaskImprSrc ...
-// Src: https://stackoverflow.com/a/31832326/710955
-func RandStringBytesMaskImprSrc(n int) string {
-	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
+func CreateAddress(n int) (error, []string) {
+	var accounts []string
+	keybase, kbErr := cliKeys.NewKeyBaseFromHomeFlag()
+	if kbErr != nil {
+		return kbErr, nil
 	}
+	for i := 0; i < n; i++ {
+		name := fmt.Sprintf("acc-%v", i+1)
+		info, mnemonic, err := keybase.CreateMnemonic(name, keys.English, "12345678", keys.Secp256k1)
 
-	return string(b)
-}
+		if err != nil {
+			return fmt.Errorf("Unable to create new account: %v", err), nil
+		}
+		fmt.Printf("Create new account. name: %v, address: %s, mnemonic:%s\n", name, info.GetAddress(), mnemonic)
 
-//Generate the random address
-func RandomAddress(num int) []string {
+		addr := info.GetAddress()
 
-	var tryArr = make([]string, num)
-	for i := range tryArr {
-		tryArr[i] = RandStringBytesMaskImprSrc(30)
+		accounts = append(accounts, addr.String())
+
 	}
-	return tryArr
+	return nil, accounts
+
 }

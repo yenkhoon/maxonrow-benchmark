@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/maxonrow/maxonrow-benchmark/lib"
 
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
@@ -16,7 +17,6 @@ import (
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	libs "github.com/maxonrow/maxonrow-benchmark/lib"
 	util "github.com/maxonrow/maxonrow-go/tests"
 )
 
@@ -35,15 +35,24 @@ type keyInfo struct {
 	addrStr string
 }
 
+type key struct {
+	Name        string
+	MasterPriv  string
+	DerivedPriv string
+	Address     string
+	Mnemonic    string
+}
+
 var tKeys map[string]*keyInfo
 
-func processBankSend() {
+func ProcessBankSend() {
 
 	//0.1 read from keys.json of sender list
-	readFileForSenderKeyJson()
+	readFile()
 
 	//0.2 read from ArrayList of receiver list
-	receiverAccList := libs.RandomAddress(30)
+	_, receiverAccList := lib.CreateAddress(30)
+
 	for i, receiver := range receiverAccList {
 
 		receiverAddress, _ := sdkTypes.AccAddressFromBech32(receiver)
@@ -51,10 +60,10 @@ func processBankSend() {
 		//1.
 		fees, _ := types.ParseCoins("200000000cin")
 		amt, _ := types.ParseCoins("1cin")
-		msg := bank.NewMsgSend(tKeys["alice"].addr, receiverAddress.Address, amt)
+		msg := bank.NewMsgSend(tKeys["alice"].addr, receiverAddress, amt)
 
 		//2.
-		tx, bz := makeSignedTx(i, "alice", "alice", seq, 0, fees, "MEMO: P2P sending.......", msg)
+		tx, bz := makeSignedTx(i, "alice", "alice", 1, 0, fees, "MEMO: P2P sending.......", msg)
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		//3.
@@ -81,18 +90,11 @@ func increaseSequence(accAddress string, seq uint64, acc sdkAuth.BaseAccount) ui
 
 }
 
-func readFileForSenderKeyJson() {
-
-	type key struct {
-		Name        string
-		MasterPriv  string
-		DerivedPriv string
-		Address     string
-		Mnemonic    string
-	}
+//Read the all the account in keys.json file
+func readFile() {
 
 	var keys []key
-	content, _ := ioutil.ReadFile("../config/keys.json")
+	content, _ := ioutil.ReadFile("./config/keys.json")
 	json.Unmarshal(content, &keys)
 	tKeys = make(map[string]*keyInfo)
 
@@ -115,10 +117,12 @@ func readFileForSenderKeyJson() {
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
 func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
+	
 	acc := util.Account(tKeys[sender].addrStr)
 	// require.NotNil(t, acc, "alias:%s", sender)
 
-	seq := increaseSequence(tKeys["alice"].addr, i, acc)
+	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
+	seq = 1
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
 		ChainID:       "maxonrow-chain",
