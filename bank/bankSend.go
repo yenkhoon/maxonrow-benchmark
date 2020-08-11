@@ -8,8 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/maxonrow/maxonrow-benchmark/lib"
+
+	// "github.com/cosmos/cosmos-sdk/x/bank"
 
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
@@ -17,13 +17,16 @@ import (
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	"github.com/maxonrow/maxonrow-benchmark/lib"
 	"github.com/maxonrow/maxonrow-go/app"
-	util "github.com/maxonrow/maxonrow-go/tests"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	client "github.com/tendermint/tendermint/rpc/lib/client"
+	clientRpc "github.com/tendermint/tendermint/rpc/lib/client"
+
+	"github.com/maxonrow/maxonrow-go/x/bank"
 )
 
 var tCdc *codec.Codec
+var client = clientRpc.NewJSONRPCClient("http://localhost:26657")
 
 type bankInfo struct {
 	from   string
@@ -60,16 +63,16 @@ func BankSend() {
 
 		receiverAddress, _ := sdkTypes.AccAddressFromBech32(receiver)
 		//1.
-		fees, _ := types.ParseCoins("200000000cin")
+		fees, _ := types.ParseCoins("800400000cin")
 		amt, _ := types.ParseCoins("1cin")
-		msg := bank.NewMsgSend(tKeys["alice"].addr, receiverAddress, amt)
+		msg := bank.NewMsgSend(tKeys["gohck"].addr, receiverAddress, amt)
 
 		//2.
-		tx, bz := makeSignedTx(i, "alice", "alice", 1, 0, fees, "MEMO: P2P sending.......", msg)
+		tx, bz := makeSignedTx("gohck", "gohck", 1, 0, fees, "", msg)
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		//3.
-		res := util.BroadcastTxAsync(bz)
+		res := BroadcastTxCommit(bz)
 		resHash := res.Hash.Bytes()
 
 		fmt.Printf("test case - (%v) with Response.Log : %v\n", i+1, resHash)
@@ -88,7 +91,6 @@ func increaseSequence(accAddress string, seq uint64, acc sdkAuth.BaseAccount) ui
 
 	store[accAddress] += seq
 	return store[accAddress]
-	//fmt.Printf("%v\n", store[accAddress])
 
 }
 
@@ -118,14 +120,19 @@ func readFile() {
 
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
-func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
+func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
 
 	acc := Account(tKeys[sender].addrStr)
-
+	// fmt.Printf("[makeSignedTx] gohck acc : %v\n", acc)
+	// fmt.Printf("[makeSignedTx] gohck acc-seq : %v\n", acc.GetSequence())
 	// require.NotNil(t, acc, "alias:%s", sender)
 
+	tCdc = app.MakeDefaultCodec()
+
 	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
-	seq = 1
+	//seq = acc.GetSequence() + 1
+	seq = acc.GetSequence()
+
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
 		ChainID:       "maxonrow-chain",
@@ -152,6 +159,7 @@ func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, f
 	}
 
 	sdtTx := authTypes.NewStdTx(signMsg.Msgs, signMsg.Fee, []authTypes.StdSignature{stdSig}, signMsg.Memo)
+
 	bz, err := tCdc.MarshalBinaryLengthPrefixed(sdtTx)
 	if err != nil {
 		panic(err)
@@ -160,9 +168,9 @@ func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, f
 }
 
 func Account(addr string) *sdkAuth.BaseAccount {
-    acc := new(sdkAuth.BaseAccount)
-	client := client.NewJSONRPCClient("http://localhost:26657")
-	ctypes.RegisterAmino(client.Codec())
+	acc := new(sdkAuth.BaseAccount)
+
+	//ctypes.RegisterAmino(client.Codec())
 	var bg string
 	_, err := client.Call("account_cdc", map[string]interface{}{"address": addr}, &bg)
 	if err == nil {
@@ -173,5 +181,17 @@ func Account(addr string) *sdkAuth.BaseAccount {
 		}
 		return acc
 	}
-	return nil
+	return acc
+}
+
+func BroadcastTxCommit(tx []byte) *ctypes.ResultBroadcastTxCommit {
+
+	result := new(ctypes.ResultBroadcastTxCommit)
+	_, err := client.Call("broadcast_tx_commit", map[string]interface{}{"tx": tx}, result)
+	if err == nil {
+		fmt.Println("BroadcastTxCommit RESULT : ", result)
+		return result
+	}
+	panic(err)
+
 }
