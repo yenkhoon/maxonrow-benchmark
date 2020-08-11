@@ -160,15 +160,13 @@ func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, f
 }
 
 func Account(addr string) *sdkAuth.BaseAccount {
-
+    acc := new(sdkAuth.BaseAccount)
 	client := client.NewJSONRPCClient("http://localhost:26657")
 	ctypes.RegisterAmino(client.Codec())
 	var bg string
 	_, err := client.Call("account_cdc", map[string]interface{}{"address": addr}, &bg)
 	if err == nil {
-		acc := new(sdkAuth.BaseAccount)
 		cdc := app.MakeDefaultCodec()
-
 		err := cdc.UnmarshalJSON([]byte(bg), acc)
 		if err != nil {
 			fmt.Print("Error unmarshal account", err)
