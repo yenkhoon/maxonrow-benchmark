@@ -18,12 +18,12 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/maxonrow/maxonrow-go/app"
-	util "github.com/maxonrow/maxonrow-go/tests"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	client "github.com/tendermint/tendermint/rpc/lib/client"
+	clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
 )
 
 var tCdc *codec.Codec
+var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
 
 type bankInfo struct {
 	from   string
@@ -69,7 +69,7 @@ func BankSend() {
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		//3.
-		res := util.BroadcastTxAsync(bz)
+		res := BroadcastTxAsync(bz)
 		resHash := res.Hash.Bytes()
 
 		fmt.Printf("test case - (%v) with Response.Log : %v\n", i+1, resHash)
@@ -121,11 +121,8 @@ func readFile() {
 func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
 
 	acc := Account(tKeys[sender].addrStr)
-
 	// require.NotNil(t, acc, "alias:%s", sender)
-
 	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
-	seq = 1
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
 		ChainID:       "maxonrow-chain",
@@ -160,8 +157,8 @@ func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, f
 }
 
 func Account(addr string) *sdkAuth.BaseAccount {
-    acc := new(sdkAuth.BaseAccount)
-	client := client.NewJSONRPCClient("http://localhost:26657")
+	acc := new(sdkAuth.BaseAccount)
+
 	ctypes.RegisterAmino(client.Codec())
 	var bg string
 	_, err := client.Call("account_cdc", map[string]interface{}{"address": addr}, &bg)
@@ -173,5 +170,14 @@ func Account(addr string) *sdkAuth.BaseAccount {
 		}
 		return acc
 	}
-	return nil
+	return acc
+}
+
+func BroadcastTxAsync(tx []byte) *ctypes.ResultBroadcastTx {
+	result := new(ctypes.ResultBroadcastTx)
+	_, err := client.Call("broadcast_tx_async", map[string]interface{}{"tx": tx}, result)
+	if err == nil {
+		return result
+	}
+	panic(err)
 }
