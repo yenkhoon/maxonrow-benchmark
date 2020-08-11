@@ -6,5 +6,6 @@ import (
 )
 
 func main() {
-	bankSend.ProcessBankSend()
+
+	bankSend.BankSend()
 }
