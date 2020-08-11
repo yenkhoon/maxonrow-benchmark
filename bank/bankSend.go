@@ -20,13 +20,11 @@ import (
 	"github.com/maxonrow/maxonrow-benchmark/lib"
 	"github.com/maxonrow/maxonrow-go/app"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	clientRpc "github.com/tendermint/tendermint/rpc/lib/client"
-
-	"github.com/maxonrow/maxonrow-go/x/bank"
+  clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
 )
 
 var tCdc *codec.Codec
-var client = clientRpc.NewJSONRPCClient("http://localhost:26657")
+var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
 
 type bankInfo struct {
 	from   string
@@ -72,7 +70,7 @@ func BankSend() {
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		//3.
-		res := BroadcastTxCommit(bz)
+		res := BroadcastTxAsync(bz)
 		resHash := res.Hash.Bytes()
 
 		fmt.Printf("test case - (%v) with Response.Log : %v\n", i+1, resHash)
@@ -123,16 +121,9 @@ func readFile() {
 func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
 
 	acc := Account(tKeys[sender].addrStr)
-	// fmt.Printf("[makeSignedTx] gohck acc : %v\n", acc)
-	// fmt.Printf("[makeSignedTx] gohck acc-seq : %v\n", acc.GetSequence())
-	// require.NotNil(t, acc, "alias:%s", sender)
 
-	tCdc = app.MakeDefaultCodec()
-
+  // require.NotNil(t, acc, "alias:%s", sender)
 	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
-	//seq = acc.GetSequence() + 1
-	seq = acc.GetSequence()
-
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
 		ChainID:       "maxonrow-chain",
@@ -170,7 +161,7 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 func Account(addr string) *sdkAuth.BaseAccount {
 	acc := new(sdkAuth.BaseAccount)
 
-	//ctypes.RegisterAmino(client.Codec())
+	ctypes.RegisterAmino(client.Codec())
 	var bg string
 	_, err := client.Call("account_cdc", map[string]interface{}{"address": addr}, &bg)
 	if err == nil {
@@ -184,14 +175,11 @@ func Account(addr string) *sdkAuth.BaseAccount {
 	return acc
 }
 
-func BroadcastTxCommit(tx []byte) *ctypes.ResultBroadcastTxCommit {
-
-	result := new(ctypes.ResultBroadcastTxCommit)
-	_, err := client.Call("broadcast_tx_commit", map[string]interface{}{"tx": tx}, result)
+func BroadcastTxAsync(tx []byte) *ctypes.ResultBroadcastTx {
+	result := new(ctypes.ResultBroadcastTx)
+	_, err := client.Call("broadcast_tx_async", map[string]interface{}{"tx": tx}, result)
 	if err == nil {
-		fmt.Println("BroadcastTxCommit RESULT : ", result)
 		return result
 	}
 	panic(err)
-
 }
