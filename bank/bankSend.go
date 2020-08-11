@@ -14,13 +14,14 @@ import (
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/maxonrow/maxonrow-benchmark/lib"
 	"github.com/maxonrow/maxonrow-go/app"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-  clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
+	clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
 )
 
 var tCdc *codec.Codec
@@ -70,7 +71,7 @@ func BankSend() {
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		//3.
-		res := BroadcastTxAsync(bz)
+		res := BroadcastTxCommit(bz)
 		resHash := res.Hash.Bytes()
 
 		fmt.Printf("test case - (%v) with Response.Log : %v\n", i+1, resHash)
@@ -122,7 +123,7 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 
 	acc := Account(tKeys[sender].addrStr)
 
-  // require.NotNil(t, acc, "alias:%s", sender)
+	// require.NotNil(t, acc, "alias:%s", sender)
 	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
@@ -182,4 +183,16 @@ func BroadcastTxAsync(tx []byte) *ctypes.ResultBroadcastTx {
 		return result
 	}
 	panic(err)
+}
+
+func BroadcastTxCommit(tx []byte) *ctypes.ResultBroadcastTxCommit {
+
+	result := new(ctypes.ResultBroadcastTxCommit)
+	_, err := client.Call("broadcast_tx_commit", map[string]interface{}{"tx": tx}, result)
+	if err == nil {
+		fmt.Println("BroadcastTxCommit RESULT : ", result)
+		return result
+	}
+	panic(err)
+
 }
