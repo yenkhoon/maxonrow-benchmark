@@ -8,8 +8,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/maxonrow/maxonrow-benchmark/lib"
+
+	// "github.com/cosmos/cosmos-sdk/x/bank"
 
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
@@ -17,9 +17,10 @@ import (
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	"github.com/maxonrow/maxonrow-benchmark/lib"
 	"github.com/maxonrow/maxonrow-go/app"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
+  clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
 )
 
 var tCdc *codec.Codec
@@ -60,12 +61,12 @@ func BankSend() {
 
 		receiverAddress, _ := sdkTypes.AccAddressFromBech32(receiver)
 		//1.
-		fees, _ := types.ParseCoins("200000000cin")
+		fees, _ := types.ParseCoins("800400000cin")
 		amt, _ := types.ParseCoins("1cin")
-		msg := bank.NewMsgSend(tKeys["alice"].addr, receiverAddress, amt)
+		msg := bank.NewMsgSend(tKeys["gohck"].addr, receiverAddress, amt)
 
 		//2.
-		tx, bz := makeSignedTx(i, "alice", "alice", 1, 0, fees, "MEMO: P2P sending.......", msg)
+		tx, bz := makeSignedTx("gohck", "gohck", 1, 0, fees, "", msg)
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		//3.
@@ -88,7 +89,6 @@ func increaseSequence(accAddress string, seq uint64, acc sdkAuth.BaseAccount) ui
 
 	store[accAddress] += seq
 	return store[accAddress]
-	//fmt.Printf("%v\n", store[accAddress])
 
 }
 
@@ -118,10 +118,11 @@ func readFile() {
 
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
-func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
+func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
 
 	acc := Account(tKeys[sender].addrStr)
-	// require.NotNil(t, acc, "alias:%s", sender)
+
+  // require.NotNil(t, acc, "alias:%s", sender)
 	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
@@ -149,6 +150,7 @@ func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, f
 	}
 
 	sdtTx := authTypes.NewStdTx(signMsg.Msgs, signMsg.Fee, []authTypes.StdSignature{stdSig}, signMsg.Memo)
+
 	bz, err := tCdc.MarshalBinaryLengthPrefixed(sdtTx)
 	if err != nil {
 		panic(err)
