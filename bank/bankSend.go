@@ -17,7 +17,10 @@ import (
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
+	"github.com/maxonrow/maxonrow-go/app"
 	util "github.com/maxonrow/maxonrow-go/tests"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
+	client "github.com/tendermint/tendermint/rpc/lib/client"
 )
 
 var tCdc *codec.Codec
@@ -45,7 +48,7 @@ type key struct {
 
 var tKeys map[string]*keyInfo
 
-func ProcessBankSend() {
+func BankSend() {
 
 	//0.1 read from keys.json of sender list
 	readFile()
@@ -56,7 +59,6 @@ func ProcessBankSend() {
 	for i, receiver := range receiverAccList {
 
 		receiverAddress, _ := sdkTypes.AccAddressFromBech32(receiver)
-
 		//1.
 		fees, _ := types.ParseCoins("200000000cin")
 		amt, _ := types.ParseCoins("1cin")
@@ -117,8 +119,9 @@ func readFile() {
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
 func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
-	
-	acc := util.Account(tKeys[sender].addrStr)
+
+	acc := Account(tKeys[sender].addrStr)
+
 	// require.NotNil(t, acc, "alias:%s", sender)
 
 	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
@@ -154,4 +157,23 @@ func makeSignedTx(i int, sender string, signer string, seq uint64, gas uint64, f
 		panic(err)
 	}
 	return sdtTx, bz
+}
+
+func Account(addr string) *sdkAuth.BaseAccount {
+
+	client := client.NewJSONRPCClient("http://localhost:26657")
+	ctypes.RegisterAmino(client.Codec())
+	var bg string
+	_, err := client.Call("account_cdc", map[string]interface{}{"address": addr}, &bg)
+	if err == nil {
+		acc := new(sdkAuth.BaseAccount)
+		cdc := app.MakeDefaultCodec()
+
+		err := cdc.UnmarshalJSON([]byte(bg), acc)
+		if err != nil {
+			fmt.Print("Error unmarshal account", err)
+		}
+		return acc
+	}
+	return nil
 }
