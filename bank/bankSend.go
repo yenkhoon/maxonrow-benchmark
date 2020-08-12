@@ -69,7 +69,15 @@ func BankSend() {
 		msg := bank.NewMsgSend(tKeys["gohck"].addr, receiverAddress, amt)
 
 		//2.
-		tx, _ := makeSignedTx("gohck", "gohck", 1, 0, fees, "", msg)
+
+		seq := Account(tKeys["gohck"].addrStr).GetSequence()
+
+		if i > 0 {
+
+			seq += uint64(i)
+		}
+
+		tx, _ := makeSignedTx("gohck", "gohck", seq, 0, fees, "", msg)
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
 		stdTxs = append(stdTxs, tx)
@@ -137,8 +145,6 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 	// require.NotNil(t, acc, "alias:%s", sender)
 
 	tCdc = app.MakeDefaultCodec()
-
-	seq = acc.GetSequence()
 
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),

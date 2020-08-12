@@ -8,6 +8,6 @@ build/
 debug*
 .idea
 .vscode
-
-vendor/*
+keys
+vendor
 
