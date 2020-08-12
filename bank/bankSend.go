@@ -15,11 +15,10 @@ import (
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/maxonrow/maxonrow-benchmark-go/lib"
+	"github.com/maxonrow/maxonrow-go/app"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-
-	"github.com/maxonrow/maxonrow-benchmark/lib"
-	"github.com/maxonrow/maxonrow-go/app"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
 )
@@ -63,7 +62,7 @@ func BankSend() {
 
 	for i, receiver := range receiverAccList {
 
-		receiverAddress, _ := sdkTypes.AccAddressFromBech32(receiver)
+		receiverAddress := sdkTypes.AccAddress(receiver)
 		//1.
 		fees, _ := types.ParseCoins("800400000cin")
 		amt, _ := types.ParseCoins("1cin")

@@ -177,6 +177,7 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5
 github.com/maxonrow/cosmos-sdk v0.34.4-0.20200722065438-9ce57d641166 h1:YpYER34SfYh3YrNFvkqHpH0JgiOOM0O2QdVBmH75G24=
 github.com/maxonrow/cosmos-sdk v0.34.4-0.20200722065438-9ce57d641166/go.mod h1:hasIdlU9b3FEFCWpoStvNQQPg1ZpAKnpmlFklAk1W1o=
 github.com/maxonrow/cosmos-sdk v0.37.4 h1:p75qznQC5SxfjUTMG9D99OzlCGvTZaBwwSkNjPHhbwU=
+github.com/maxonrow/maxonrow-benchmark-go v0.0.0-20200807065249-a6ed3d1cbeed h1:36L3oxiD259SccRQ3iUl0yiMU1fGWsXbUockeF4WemQ=
 github.com/maxonrow/maxonrow-go v1.3.4 h1:t75tDakmrOa7e4InMK6YyXNer+c5OBT9aMZdwBUCA3M=
 github.com/maxonrow/maxonrow-go v1.3.4/go.mod h1:IzYy8/V8thj5nPxENNe9YpyNia0Y+gSEL7AZGUfZSB4=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=

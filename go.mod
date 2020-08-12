@@ -1,4 +1,4 @@
-module github.com/maxonrow/maxonrow-benchmark
+module github.com/maxonrow/maxonrow-benchmark-go
 
 go 1.13
 
