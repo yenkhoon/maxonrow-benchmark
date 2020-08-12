@@ -14,13 +14,14 @@ import (
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/bank"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/maxonrow/maxonrow-benchmark/lib"
 	"github.com/maxonrow/maxonrow-go/app"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-  clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
+	clientrpc "github.com/tendermint/tendermint/rpc/lib/client"
 )
 
 var tCdc *codec.Codec
@@ -48,6 +49,7 @@ type key struct {
 }
 
 var tKeys map[string]*keyInfo
+var receiverList = 30
 
 func BankSend() {
 
@@ -55,7 +57,7 @@ func BankSend() {
 	readFile()
 
 	//0.2 read from ArrayList of receiver list
-	_, receiverAccList := lib.CreateAddress(30)
+	_, receiverAccList := lib.CreateAddress(receiverList)
 
 	for i, receiver := range receiverAccList {
 
@@ -119,11 +121,13 @@ func readFile() {
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
 func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
-
 	acc := Account(tKeys[sender].addrStr)
+	// require.NotNil(t, acc, "alias:%s", sender)
 
-  // require.NotNil(t, acc, "alias:%s", sender)
-	//seq := increaseSequence(tKeys["alice"].addr, i, acc)
+	tCdc = app.MakeDefaultCodec()
+
+	seq = acc.GetSequence()
+
 	signMsg := authTypes.StdSignMsg{
 		AccountNumber: acc.GetAccountNumber(),
 		ChainID:       "maxonrow-chain",
@@ -152,6 +156,7 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 	sdtTx := authTypes.NewStdTx(signMsg.Msgs, signMsg.Fee, []authTypes.StdSignature{stdSig}, signMsg.Memo)
 
 	bz, err := tCdc.MarshalBinaryLengthPrefixed(sdtTx)
+	// fmt.Println("sdtTx [MarshalBinaryLengthPrefixed] : ", string(bz))
 	if err != nil {
 		panic(err)
 	}
@@ -161,7 +166,6 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 func Account(addr string) *sdkAuth.BaseAccount {
 	acc := new(sdkAuth.BaseAccount)
 
-	ctypes.RegisterAmino(client.Codec())
 	var bg string
 	_, err := client.Call("account_cdc", map[string]interface{}{"address": addr}, &bg)
 	if err == nil {
@@ -182,4 +186,24 @@ func BroadcastTxAsync(tx []byte) *ctypes.ResultBroadcastTx {
 		return result
 	}
 	panic(err)
+}
+
+func BroadcastTxSync(tx []byte) *ctypes.ResultBroadcastTx {
+	result := new(ctypes.ResultBroadcastTx)
+	_, err := client.Call("broadcast_tx_sync", map[string]interface{}{"tx": tx}, result)
+	if err == nil {
+		return result
+	}
+	panic(err)
+}
+
+func BroadcastTxCommit(tx []byte) *ctypes.ResultBroadcastTxCommit {
+
+	result := new(ctypes.ResultBroadcastTxCommit)
+	_, err := client.Call("broadcast_tx_commit", map[string]interface{}{"tx": tx}, result)
+	if err == nil {
+		return result
+	}
+	panic(err)
+
 }
