@@ -59,6 +59,8 @@ func BankSend() {
 	//0.2 read from ArrayList of receiver list
 	_, receiverAccList := lib.CreateAddress(receiverList)
 
+	var stdTxs []sdkAuth.StdTx
+
 	for i, receiver := range receiverAccList {
 
 		receiverAddress, _ := sdkTypes.AccAddressFromBech32(receiver)
@@ -68,15 +70,26 @@ func BankSend() {
 		msg := bank.NewMsgSend(tKeys["gohck"].addr, receiverAddress, amt)
 
 		//2.
-		tx, bz := makeSignedTx("gohck", "gohck", 1, 0, fees, "", msg)
+		tx, _ := makeSignedTx("gohck", "gohck", 1, 0, fees, "", msg)
 		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 
-		//3.
-		res := BroadcastTxAsync(bz)
-		resHash := res.Hash.Bytes()
+		stdTxs = append(stdTxs, tx)
+	}
 
-		fmt.Printf("test case - (%v) with Response.Log : %v\n", i+1, resHash)
+	if len(stdTxs) > 0 {
+		for k, v := range stdTxs {
+			bz, err := tCdc.MarshalBinaryLengthPrefixed(v)
+			// fmt.Println("sdtTx [MarshalBinaryLengthPrefixed] : ", string(bz))
+			if err != nil {
+				panic(err)
+			}
 
+			//3.
+			res := BroadcastTxAsync(bz)
+			resHash := res.Hash.Bytes()
+
+			fmt.Printf("test case - (%v) with Response.Log : %v\n", k+1, resHash)
+		}
 	}
 
 }
