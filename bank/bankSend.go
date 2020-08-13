@@ -57,8 +57,6 @@ func BankSend(receiverAccList [][]byte) {
 	if len(senders) > 0 {
 		for _, sender := range senders {
 
-			//go func() {
-
 			for i, receiver := range receiverAccList {
 
 				receiverAddress := sdkTypes.AccAddress(receiver)
