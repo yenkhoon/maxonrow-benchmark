@@ -9,8 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types"
 
-	// "github.com/cosmos/cosmos-sdk/x/bank"
-
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -47,50 +45,52 @@ type key struct {
 }
 
 var tKeys map[string]*keyInfo
-var receiverList = 30
 
 func BankSend(receiverAccList [][]byte) {
 
-	//0.1 read from keys.json of sender list
 	readFile()
-	//0.2 read from ArrayList of receiver list
-	var stdTxs []sdkAuth.StdTx
-	for i, receiver := range receiverAccList {
 
-		receiverAddress := sdkTypes.AccAddress(receiver)
-		//1.
-		fees, _ := types.ParseCoins("800400000cin")
-		amt, _ := types.ParseCoins("1cin")
-		msg := bank.NewMsgSend(tKeys["gohck"].addr, receiverAddress, amt)
+	senders := []string{"gohck", "carlo", "mostafa", "nago", "jeansoon", "yk"}
 
-		//2.
+	var txs [][]byte
 
-		seq := Account(tKeys["gohck"].addrStr).GetSequence()
+	if len(senders) > 0 {
+		for _, sender := range senders {
 
-		if i > 0 {
+			//go func() {
 
-			seq += uint64(i)
-		}
+			for i, receiver := range receiverAccList {
 
-		tx, _ := makeSignedTx("gohck", "gohck", seq, 0, fees, "", msg)
-		fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
+				receiverAddress := sdkTypes.AccAddress(receiver)
+				//1.
+				fees, _ := types.ParseCoins("800400000cin")
+				amt, _ := types.ParseCoins("1cin")
+				msg := bank.NewMsgSend(tKeys[sender].addr, receiverAddress, amt)
 
-		stdTxs = append(stdTxs, tx)
-	}
+				//2.
 
-	if len(stdTxs) > 0 {
-		for k, v := range stdTxs {
-			bz, err := tCdc.MarshalBinaryLengthPrefixed(v)
-			// fmt.Println("sdtTx [MarshalBinaryLengthPrefixed] : ", string(bz))
-			if err != nil {
-				panic(err)
+				seq := Account(tKeys[sender].addrStr).GetSequence()
+
+				if i > 0 {
+
+					seq += uint64(i)
+				}
+
+				tx, bz := makeSignedTx(sender, sender, seq, 0, fees, "", msg)
+
+				txs = append(txs, bz)
+
+				fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", len(txs), tx)
 			}
+			//fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
+			//}()
+		}
+		if len(txs) > 0 {
+			for _, v := range txs {
 
-			//3.
-			res := BroadcastTxAsync(bz)
-			resHash := res.Hash.Bytes()
+				BroadcastTxAsync(v)
 
-			fmt.Printf("test case - (%v) with Response.Log : %v\n", k+1, resHash)
+			}
 		}
 	}
 
