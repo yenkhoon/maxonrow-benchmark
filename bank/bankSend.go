@@ -15,7 +15,6 @@ import (
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	"github.com/maxonrow/maxonrow-benchmark-go/lib"
 	"github.com/maxonrow/maxonrow-go/app"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -50,16 +49,12 @@ type key struct {
 var tKeys map[string]*keyInfo
 var receiverList = 30
 
-func BankSend() {
+func BankSend(receiverAccList [][]byte) {
 
 	//0.1 read from keys.json of sender list
 	readFile()
-
 	//0.2 read from ArrayList of receiver list
-	_, receiverAccList := lib.CreateAddress(receiverList)
-
 	var stdTxs []sdkAuth.StdTx
-
 	for i, receiver := range receiverAccList {
 
 		receiverAddress := sdkTypes.AccAddress(receiver)
