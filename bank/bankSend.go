@@ -23,6 +23,7 @@ import (
 var tCdc *codec.Codec
 
 var client = clientrpc.NewJSONRPCClient("http://192.168.20.219:26657")
+
 //var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
 
 type bankInfo struct {
@@ -76,6 +77,7 @@ func BankSend(senders []string, receiverAccList [][]byte) {
 
 				txs = append(txs, bz)
 
+				//fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", len(txs), tx)
 				fmt.Printf(".")
 			}
 			//fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
