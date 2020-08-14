@@ -22,8 +22,8 @@ import (
 
 var tCdc *codec.Codec
 
-//var client = clientrpc.NewJSONRPCClient("http://192.168.20.219:26657")
-var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
+var client = clientrpc.NewJSONRPCClient("http://192.168.20.219:26657")
+//var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
 
 type bankInfo struct {
 	from   string
@@ -72,22 +72,20 @@ func BankSend(senders []string, receiverAccList [][]byte) {
 					seq += uint64(1)
 				}
 
-				tx, bz := makeSignedTx(sender, sender, seq, accNum, 0, fees, "", msg)
+				_, bz := makeSignedTx(sender, sender, seq, accNum, 0, fees, "", msg)
 
 				txs = append(txs, bz)
 
-				fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", len(txs), tx)
+				fmt.Printf(".")
 			}
 			//fmt.Printf("test case - (%v) with SignedTx Msg: %v\n", i+1, tx)
 			//}()
 		}
 		if len(txs) > 0 {
-			for _, v := range txs {
+			result := new(ctypes.ResultBroadcastTx)
 
-				BroadcastTxAsync(v)
-
-				//fmt.Printf("sent tx - (%v) \n", res)
-
+			for _, tx := range txs {
+				client.Call("broadcast_tx_async", map[string]interface{}{"tx": tx}, result)
 			}
 		}
 	}
