@@ -21,7 +21,9 @@ import (
 )
 
 var tCdc *codec.Codec
-var client = clientrpc.NewJSONRPCClient("http://192.168.20.219:26657")
+
+//var client = clientrpc.NewJSONRPCClient("http://192.168.20.219:26657")
+var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
 
 type bankInfo struct {
 	from   string
@@ -53,8 +55,11 @@ func BankSend(senders []string, receiverAccList [][]byte) {
 	var txs [][]byte
 
 	if len(senders) > 0 {
-		for _, sender := range senders {
 
+		for _, sender := range senders {
+			acc := Account(tKeys[sender].addrStr)
+			accNum := acc.GetAccountNumber()
+			seq := acc.GetSequence()
 			for i, receiver := range receiverAccList {
 
 				receiverAddress := sdkTypes.AccAddress(receiver)
@@ -63,16 +68,11 @@ func BankSend(senders []string, receiverAccList [][]byte) {
 				amt, _ := types.ParseCoins("1cin")
 				msg := bank.NewMsgSend(tKeys[sender].addr, receiverAddress, amt)
 
-				//2.
-
-				seq := Account(tKeys[sender].addrStr).GetSequence()
-
 				if i > 0 {
-
-					seq += uint64(i)
+					seq += uint64(1)
 				}
 
-				tx, bz := makeSignedTx(sender, sender, seq, 0, fees, "", msg)
+				tx, bz := makeSignedTx(sender, sender, seq, accNum, 0, fees, "", msg)
 
 				txs = append(txs, bz)
 
@@ -135,16 +135,16 @@ func readFile() map[string]*keyInfo {
 
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
-func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
+func makeSignedTx(sender string, signer string, seq, accNum uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
 	tKeys := readFile()
 
-	acc := Account(tKeys[sender].addrStr)
+	//acc := Account(tKeys[sender].addrStr)
 	// require.NotNil(t, acc, "alias:%s", sender)
 
 	tCdc = app.MakeDefaultCodec()
 
 	signMsg := authTypes.StdSignMsg{
-		AccountNumber: acc.GetAccountNumber(),
+		AccountNumber: accNum,
 		ChainID:       "maxonrow-chain",
 		Fee:           authTypes.NewStdFee(gas, fees),
 		Memo:          memo,
