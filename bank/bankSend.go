@@ -12,8 +12,8 @@ import (
 	sdkTypes "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth"
 	authTypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/maxonrow/maxonrow-go/app"
+	"github.com/maxonrow/maxonrow-go/x/bank"
 	tmCrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -21,7 +21,7 @@ import (
 )
 
 var tCdc *codec.Codec
-var client = clientrpc.NewJSONRPCClient("http://localhost:26657")
+var client = clientrpc.NewJSONRPCClient("http://192.168.20.219:26657")
 
 type bankInfo struct {
 	from   string
@@ -44,13 +44,11 @@ type key struct {
 	Mnemonic    string
 }
 
-var tKeys map[string]*keyInfo
+func BankSend(senders []string, receiverAccList [][]byte) {
 
-func BankSend(receiverAccList [][]byte) {
+	tKeys := readFile()
 
-	readFile()
-
-	senders := []string{"gohck", "carlo", "mostafa", "nago", "jeansoon", "yk"}
+	//senders := []string{"gohck", "carlo", "mostafa", "nago", "jeansoon", "yk"}
 
 	var txs [][]byte
 
@@ -88,6 +86,8 @@ func BankSend(receiverAccList [][]byte) {
 
 				BroadcastTxAsync(v)
 
+				//fmt.Printf("sent tx - (%v) \n", res)
+
 			}
 		}
 	}
@@ -108,12 +108,12 @@ func increaseSequence(accAddress string, seq uint64, acc sdkAuth.BaseAccount) ui
 }
 
 //Read the all the account in keys.json file
-func readFile() {
+func readFile() map[string]*keyInfo {
 
 	var keys []key
 	content, _ := ioutil.ReadFile("./config/keys.json")
 	json.Unmarshal(content, &keys)
-	tKeys = make(map[string]*keyInfo)
+	tKeys := make(map[string]*keyInfo)
 
 	for _, k := range keys {
 		bz, _ := hex.DecodeString(k.DerivedPriv)
@@ -129,11 +129,15 @@ func readFile() {
 		}
 
 	}
+
+	return tKeys
 }
 
 // for most of transactions, sender is same as signer.
 // only for multi-sig transactions sender and signer are different.
 func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdkTypes.Coins, memo string, msg sdkTypes.Msg) (sdkAuth.StdTx, []byte) {
+	tKeys := readFile()
+
 	acc := Account(tKeys[sender].addrStr)
 	// require.NotNil(t, acc, "alias:%s", sender)
 
@@ -158,9 +162,9 @@ func makeSignedTx(sender string, signer string, seq uint64, gas uint64, fees sdk
 		panic(err)
 	}
 
-	pub := tKeys[signer].priv.PubKey()
+	//pub := tKeys[signer].priv.PubKey()
 	stdSig := sdkAuth.StdSignature{
-		PubKey:    pub,
+		//PubKey:    pub,
 		Signature: sig,
 	}
 
